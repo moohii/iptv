@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="IPTV">
+<title>مشغل IPTV</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+
+:root{
+  --bg: #0d0f14;
+  --bg2: #141720;
+  --bg3: #1c2030;
+  --accent: #e8a020;
+  --accent2: #f0c060;
+  --text: #eef0f5;
+  --muted: #6b7590;
+  --border: rgba(255,255,255,0.07);
+  --red: #e05060;
+  --green: #40c878;
+}
+
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;}
+
+/* ===== LOGIN SCREEN ===== */
+#loginScreen{
+  position:fixed;inset:0;z-index:100;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;
+}
+
+.logo-wrap{text-align:center;margin-bottom:32px;}
+.logo-icon{font-size:56px;display:block;margin-bottom:8px;}
+.logo-title{font-size:28px;font-weight:700;color:var(--accent);letter-spacing:1px;}
+.logo-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+
+.login-card{
+  width:100%;max-width:400px;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:24px;
+}
+
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;}
+.field input{
+  width:100%;background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:12px 14px;
+  font-size:14px;font-family:'Cairo',sans-serif;
+  color:var(--text);outline:none;
+  -webkit-appearance:none;
+}
+.field input:focus{border-color:rgba(232,160,32,0.4);}
+
+.connect-btn{
+  width:100%;background:var(--accent);
+  border:none;border-radius:12px;
+  padding:14px;font-size:16px;font-weight:700;
+  font-family:'Cairo',sans-serif;color:#000;
+  cursor:pointer;margin-top:8px;
+  transition:opacity 0.2s;
+}
+.connect-btn:active{opacity:0.8;}
+
+.saved-wrap{margin-top:16px;}
+.saved-title{font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:1px;}
+.saved-btn{
+  width:100%;background:var(--bg3);
+  border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;font-size:13px;
+  font-family:'Cairo',sans-serif;color:var(--accent);
+  cursor:pointer;text-align:right;
+  display:flex;align-items:center;gap:10px;
+}
+.saved-btn span{flex:1;font-size:13px;color:var(--text);}
+
+.err-msg{
+  background:rgba(224,80,96,0.12);border:1px solid rgba(224,80,96,0.3);
+  border-radius:10px;padding:10px 14px;
+  font-size:13px;color:var(--red);
+  margin-top:12px;display:none;
+  text-align:center;
+}
+
+/* ===== MAIN APP ===== */
+#app{display:none;height:100%;flex-direction:column;}
+
+/* Top bar */
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.topbar-title{font-size:16px;font-weight:700;color:var(--accent);flex:1;}
+.topbar-btn{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:6px 12px;
+  font-size:12px;color:var(--muted);
+  font-family:'Cairo',sans-serif;cursor:pointer;
+}
+
+/* Tabs */
+.tabs{
+  display:flex;background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.tab{
+  flex:1;padding:10px 4px;text-align:center;
+  font-size:13px;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:color 0.2s,border-color 0.2s;
+}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* Search */
+.search-wrap{padding:10px 14px;background:var(--bg);flex-shrink:0;}
+.search-input{
+  width:100%;background:var(--bg2);
+  border:1px solid var(--border);border-radius:10px;
+  padding:9px 14px;font-size:14px;
+  font-family:'Cairo',sans-serif;color:var(--text);
+  outline:none;-webkit-appearance:none;
+}
+
+/* Content area */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* Category list */
+.cat-list{padding:8px 0;}
+.cat-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  transition:background 0.15s;
+}
+.cat-item:active{background:var(--bg2);}
+.cat-icon{font-size:20px;width:32px;text-align:center;}
+.cat-name{flex:1;font-size:15px;color:var(--text);}
+.cat-count{font-size:12px;color:var(--muted);}
+.cat-arrow{color:var(--muted);font-size:14px;}
+
+/* Channel list */
+.ch-list{padding:8px 0;}
+.ch-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 16px;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  transition:background 0.15s;
+}
+.ch-item:active{background:var(--bg2);}
+.ch-logo{
+  width:44px;height:44px;border-radius:8px;
+  background:var(--bg3);object-fit:contain;
+  flex-shrink:0;
+}
+.ch-logo-placeholder{
+  width:44px;height:44px;border-radius:8px;
+  background:var(--bg3);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.ch-info{flex:1;min-width:0;}
+.ch-name{font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ch-group{font-size:11px;color:var(--muted);margin-top:2px;}
+.back-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  cursor:pointer;font-size:14px;color:var(--accent);
+}
+
+/* Loading */
+.loading{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:60px 20px;gap:16px;
+}
+.spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:3px solid var(--bg3);
+  border-top-color:var(--accent);
+  animation:spin 0.8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{font-size:14px;color:var(--muted);}
+
+/* Empty */
+.empty{text-align:center;padding:60px 20px;}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty p{font-size:14px;color:var(--muted);}
+
+/* ===== PLAYER ===== */
+#playerScreen{
+  position:fixed;inset:0;z-index:200;
+  background:#000;
+  display:none;flex-direction:column;
+}
+
+#playerScreen.visible{display:flex;}
+
+.player-top{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;
+  background:rgba(0,0,0,0.7);
+  position:absolute;top:0;left:0;right:0;z-index:10;
+}
+.player-close{
+  background:rgba(255,255,255,0.1);border:none;
+  border-radius:8px;padding:6px 14px;
+  font-size:13px;color:var(--text);
+  font-family:'Cairo',sans-serif;cursor:pointer;
+}
+.player-ch-name{flex:1;font-size:15px;font-weight:600;color:var(--text);}
+
+#videoEl{
+  width:100%;height:100%;
+  object-fit:contain;background:#000;
+}
+
+.player-status{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,0.6);
+  padding:10px 16px;
+  font-size:13px;color:var(--muted);
+  text-align:center;
+  transition:opacity 0.3s;
+}
+
+.player-err{
+  position:absolute;inset:0;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.85);
+  text-align:center;padding:24px;z-index:20;
+}
+.player-err.show{display:flex;}
+.player-err-icon{font-size:48px;margin-bottom:12px;}
+.player-err h3{font-size:18px;color:var(--text);margin-bottom:8px;}
+.player-err p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.retry-btn{
+  background:var(--accent);border:none;border-radius:10px;
+  padding:12px 28px;font-size:15px;font-weight:700;
+  font-family:'Cairo',sans-serif;color:#000;cursor:pointer;
+}
+
+/* Stats bar */
+.stats-bar{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:8px 16px;
+  display:flex;gap:16px;flex-shrink:0;
+}
+.stat{text-align:center;}
+.stat-num{font-size:18px;font-weight:700;color:var(--accent);}
+.stat-lbl{font-size:10px;color:var(--muted);}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="logo-wrap">
+    <span class="logo-icon">📺</span>
+    <div class="logo-title">IPTV Player</div>
+    <div class="logo-sub">مشغل Xtream Codes و M3U</div>
+  </div>
+
+  <div class="login-card">
+    <div class="field">
+      <label>🌐 عنوان السيرفر (URL)</label>
+      <input type="url" id="hostInput" placeholder="http://example.com:8080" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>👤 اسم المستخدم</label>
+      <input type="text" id="userInput" placeholder="username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>🔑 كلمة السر</label>
+      <input type="password" id="passInput" placeholder="password" autocomplete="off">
+    </div>
+    <button class="connect-btn" onclick="connect()">اتصال ←</button>
+    <div class="err-msg" id="errMsg"></div>
+
+    <div class="saved-wrap" id="savedWrap" style="display:none">
+      <div class="saved-title">حساب محفوظ</div>
+      <button class="saved-btn" onclick="loadSaved()">
+        <span>📡</span>
+        <span id="savedName">—</span>
+        <span style="color:var(--accent)">←</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-title">📺 IPTV</div>
+    <div id="expiry" style="font-size:11px;color:var(--muted)"></div>
+    <button class="topbar-btn" onclick="logout()">خروج</button>
+  </div>
+
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <div class="stat"><div class="stat-num" id="statLive">0</div><div class="stat-lbl">قناة حية</div></div>
+    <div class="stat"><div class="stat-num" id="statVod">0</div><div class="stat-lbl">أفلام</div></div>
+    <div class="stat"><div class="stat-num" id="statSeries">0</div><div class="stat-lbl">مسلسلات</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('live',this)">📡 قنوات</div>
+    <div class="tab" onclick="switchTab('vod',this)">🎬 أفلام</div>
+    <div class="tab" onclick="switchTab('series',this)">📺 مسلسلات</div>
+  </div>
+
+  <div class="search-wrap">
+    <input class="search-input" id="searchInput" type="search" placeholder="🔍 بحث..." oninput="onSearch(this.value)" autocorrect="off" autocapitalize="off">
+  </div>
+
+  <div class="content" id="mainContent">
+    <div class="loading"><div class="spinner"></div><p>جارٍ التحميل...</p></div>
+  </div>
+</div>
+
+<!-- PLAYER -->
+<div id="playerScreen">
+  <div class="player-top">
+    <button class="player-close" onclick="closePlayer()">✕ إغلاق</button>
+    <div class="player-ch-name" id="playerChName">—</div>
+  </div>
+  <video id="videoEl" controls playsinline webkit-playsinline autoplay></video>
+  <div class="player-status" id="playerStatus">جارٍ التحميل...</div>
+  <div class="player-err" id="playerErr">
+    <div class="player-err-icon">⚠️</div>
+    <h3>تعذّر تشغيل القناة</h3>
+    <p id="playerErrMsg">القناة غير متاحة حالياً أو التنسيق غير مدعوم في هذا الجهاز.</p>
+    <button class="retry-btn" onclick="retryPlay()">إعادة المحاولة</button>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+var S = {
+  host:'', user:'', pass:'',
+  categories:[], channels:[], vod:[], series:[],
+  currentTab:'live',
+  currentCat:null,
+  currentUrl:null,
+  currentName:null,
+  filtered:[],
+  view:'cats' // 'cats' or 'channels'
+};
+
+// ===== INIT =====
+(function(){
+  var saved = lsGet('iptv_account');
+  if(saved){
+    document.getElementById('savedWrap').style.display='block';
+    document.getElementById('savedName').textContent = saved.host.replace('http://','').split(':')[0];
+    document.getElementById('hostInput').value = saved.host;
+    document.getElementById('userInput').value = saved.user;
+    document.getElementById('passInput').value = saved.pass;
+  }
+})();
+
+// ===== STORAGE =====
+function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+function loadSaved(){
+  var s=lsGet('iptv_account');
+  if(s){S.host=s.host;S.user=s.user;S.pass=s.pass;startApp();}
+}
+
+// ===== CONNECT =====
+function connect(){
+  var host=document.getElementById('hostInput').value.trim();
+  var user=document.getElementById('userInput').value.trim();
+  var pass=document.getElementById('passInput').value.trim();
+  if(!host||!user||!pass){showErr('يرجى ملء جميع الحقول');return;}
+  if(host.slice(-1)==='/') host=host.slice(0,-1);
+  S.host=host; S.user=user; S.pass=pass;
+  startApp();
+}
+
+function showErr(msg){
+  var el=document.getElementById('errMsg');
+  el.textContent=msg; el.style.display='block';
+  setTimeout(function(){el.style.display='none';},4000);
+}
+
+// ===== START APP =====
+function startApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  lsSet('iptv_account',{host:S.host,user:S.user,pass:S.pass});
+  loadLiveCategories();
+}
+
+function logout(){
+  S={host:'',user:'',pass:'',categories:[],channels:[],vod:[],series:[],currentTab:'live',currentCat:null,currentUrl:null,currentName:null,filtered:[],view:'cats'};
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('statsBar').style.display='none';
+}
+
+// ===== API =====
+function apiUrl(action, extra){
+  var base = S.host+'/player_api.php?username='+S.user+'&password='+S.pass+'&action='+action;
+  return extra ? base+'&'+extra : base;
+}
+
+function fetchJSON(url, cb){
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url, true);
+  xhr.timeout = 15000;
+  xhr.onreadystatechange = function(){
+    if(xhr.readyState===4){
+      if(xhr.status===200){
+        try{ cb(null, JSON.parse(xhr.responseText)); }
+        catch(e){ cb('خطأ في البيانات'); }
+      } else {
+        cb('خطأ في الاتصال: '+xhr.status);
+      }
+    }
+  };
+  xhr.onerror = function(){ cb('تعذّر الاتصال بالسيرفر'); };
+  xhr.ontimeout = function(){ cb('انتهت مهلة الاتصال'); };
+  xhr.send();
+}
+
+// ===== LIVE CATEGORIES =====
+function loadLiveCategories(){
+  setContent('<div class="loading"><div class="spinner"></div><p>جارٍ تحميل القنوات...</p></div>');
+  // First get account info
+  fetchJSON(apiUrl('get_live_categories'), function(err, data){
+    if(err){ setContent('<div class="empty"><div class="empty-icon">❌</div><p>'+err+'</p></div>'); return; }
+    S.categories = data || [];
+    // Also load account info
+    fetchJSON(S.host+'/player_api.php?username='+S.user+'&password='+S.pass, function(e2, info){
+      if(!e2 && info && info.user_info){
+        var exp = info.user_info.exp_date;
+        if(exp){
+          var d = new Date(parseInt(exp)*1000);
+          document.getElementById('expiry').textContent = 'ينتهي: '+d.toLocaleDateString('ar');
+        }
+        if(info.server_info){
+          document.getElementById('statsBar').style.display='flex';
+        }
+      }
+    });
+    renderCategories();
+  });
+}
+
+function renderCategories(){
+  if(!S.categories.length){
+    setContent('<div class="empty"><div class="empty-icon">📭</div><p>لا توجد فئات</p></div>');
+    return;
+  }
+  S.view='cats';
+  document.getElementById('searchInput').value='';
+  var html='<div class="cat-list">';
+  // All channels option
+  html+='<div class="cat-item" onclick="loadChannels(\'all\',\'كل القنوات\')">';
+  html+='<div class="cat-icon">📡</div><div class="cat-name">كل القنوات</div><div class="cat-arrow">←</div></div>';
+  for(var i=0;i<S.categories.length;i++){
+    var c=S.categories[i];
+    html+='<div class="cat-item" onclick="loadChannels(\''+escAttr(c.category_id)+'\',\''+escAttr(c.category_name)+'\')">';
+    html+='<div class="cat-icon">📺</div>';
+    html+='<div class="cat-name">'+esc(c.category_name)+'</div>';
+    html+='<div class="cat-arrow">←</div>';
+    html+='</div>';
+  }
+  html+='</div>';
+  setContent(html);
+}
+
+// ===== LOAD CHANNELS =====
+function loadChannels(catId, catName){
+  S.currentCat = {id:catId, name:catName};
+  setContent('<div class="loading"><div class="spinner"></div><p>جارٍ تحميل "'+esc(catName)+'"...</p></div>');
+  var url = catId==='all'
+    ? apiUrl('get_live_streams')
+    : apiUrl('get_live_streams','category_id='+catId);
+  fetchJSON(url, function(err, data){
+    if(err){ setContent('<div class="empty"><div class="empty-icon">❌</div><p>'+err+'</p></div>'); return; }
+    S.channels = data || [];
+    S.filtered = S.channels;
+    S.view='channels';
+    renderChannels(S.channels, catName);
+  });
+}
+
+function renderChannels(list, title){
+  var html='';
+  html+='<div class="back-btn" onclick="backToCats()">← رجوع | '+esc(title||'')+'</div>';
+  if(!list.length){
+    html+='<div class="empty"><div class="empty-icon">📭</div><p>لا توجد قنوات</p></div>';
+    setContent(html); return;
+  }
+  html+='<div class="ch-list">';
+  for(var i=0;i<list.length;i++){
+    var c=list[i];
+    var streamUrl=S.host+'/live/'+S.user+'/'+S.pass+'/'+c.stream_id+'.m3u8';
+    html+='<div class="ch-item" onclick="playStream(\''+escAttr(streamUrl)+'\',\''+escAttr(c.name)+'\')">';
+    if(c.stream_icon){
+      html+='<img class="ch-logo" src="'+escAttr(c.stream_icon)+'" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" loading="lazy">';
+      html+='<div class="ch-logo-placeholder" style="display:none">📺</div>';
+    } else {
+      html+='<div class="ch-logo-placeholder">📺</div>';
+    }
+    html+='<div class="ch-info"><div class="ch-name">'+esc(c.name)+'</div>';
+    if(c.epg_channel_id) html+='<div class="ch-group">'+esc(c.epg_channel_id)+'</div>';
+    html+='</div></div>';
+  }
+  html+='</div>';
+  setContent(html);
+}
+
+function backToCats(){
+  if(S.currentTab==='live') renderCategories();
+  else if(S.currentTab==='vod') renderVodCategories();
+  else renderSeriesCategories();
+}
+
+// ===== VOD =====
+function loadVodCategories(){
+  setContent('<div class="loading"><div class="spinner"></div><p>جارٍ تحميل الأفلام...</p></div>');
+  fetchJSON(apiUrl('get_vod_categories'), function(err, data){
+    if(err){ setContent('<div class="empty"><div class="empty-icon">❌</div><p>'+err+'</p></div>'); return; }
+    S.vod = data || [];
+    renderVodCategories();
+  });
+}
+
+function renderVodCategories(){
+  S.view='cats';
+  document.getElementById('searchInput').value='';
+  if(!S.vod.length){
+    setContent('<div class="empty"><div class="empty-icon">🎬</div><p>لا توجد أفلام</p></div>');
+    return;
+  }
+  var html='<div class="cat-list">';
+  html+='<div class="cat-item" onclick="loadVod(\'all\',\'كل الأفلام\')">';
+  html+='<div class="cat-icon">🎬</div><div class="cat-name">كل الأفلام</div><div class="cat-arrow">←</div></div>';
+  for(var i=0;i<S.vod.length;i++){
+    var c=S.vod[i];
+    html+='<div class="cat-item" onclick="loadVod(\''+escAttr(c.category_id)+'\',\''+escAttr(c.category_name)+'\')">';
+    html+='<div class="cat-icon">🎬</div><div class="cat-name">'+esc(c.category_name)+'</div><div class="cat-arrow">←</div></div>';
+  }
+  html+='</div>';
+  setContent(html);
+}
+
+function loadVod(catId, catName){
+  setContent('<div class="loading"><div class="spinner"></div><p>جارٍ التحميل...</p></div>');
+  var url = catId==='all' ? apiUrl('get_vod_streams') : apiUrl('get_vod_streams','category_id='+catId);
+  fetchJSON(url, function(err, data){
+    if(err){ setContent('<div class="empty"><div class="empty-icon">❌</div><p>'+err+'</p></div>'); return; }
+    S.channels = data || [];
+    S.filtered = S.channels;
+    S.view='channels';
+    renderVodList(S.channels, catName);
+  });
+}
+
+function renderVodList(list, title){
+  var html='<div class="back-btn" onclick="backToCats()">← رجوع | '+esc(title||'')+'</div>';
+  if(!list.length){html+='<div class="empty"><div class="empty-icon">📭</div><p>فارغ</p></div>';setContent(html);return;}
+  html+='<div class="ch-list">';
+  for(var i=0;i<list.length;i++){
+    var c=list[i];
+    var ext=c.container_extension||'mp4';
+    var streamUrl=S.host+'/movie/'+S.user+'/'+S.pass+'/'+c.stream_id+'.'+ext;
+    html+='<div class="ch-item" onclick="playStream(\''+escAttr(streamUrl)+'\',\''+escAttr(c.name)+'\')">';
+    if(c.stream_icon){
+      html+='<img class="ch-logo" src="'+escAttr(c.stream_icon)+'" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" loading="lazy">';
+      html+='<div class="ch-logo-placeholder" style="display:none">🎬</div>';
+    } else { html+='<div class="ch-logo-placeholder">🎬</div>'; }
+    html+='<div class="ch-info"><div class="ch-name">'+esc(c.name)+'</div>';
+    if(c.rating) html+='<div class="ch-group">⭐ '+esc(c.rating)+'</div>';
+    html+='</div></div>';
+  }
+  html+='</div>';
+  setContent(html);
+}
+
+// ===== SERIES =====
+function loadSeriesCategories(){
+  setContent('<div class="loading"><div class="spinner"></div><p>جارٍ تحميل المسلسلات...</p></div>');
+  fetchJSON(apiUrl('get_series_categories'), function(err, data){
+    if(err){ setContent('<div class="empty"><div class="empty-icon">❌</div><p>'+err+'</p></div>'); return; }
+    S.series = data || [];
+    renderSeriesCategories();
+  });
+}
+
+function renderSeriesCategories(){
+  S.view='cats';
+  document.getElementById('searchInput').value='';
+  if(!S.series.length){setContent('<div class="empty"><div class="empty-icon">📺</div><p>لا توجد مسلسلات</p></div>');return;}
+  var html='<div class="cat-list">';
+  for(var i=0;i<S.series.length;i++){
+    var c=S.series[i];
+    html+='<div class="cat-item" onclick="loadSeries(\''+escAttr(c.category_id)+'\',\''+escAttr(c.category_name)+'\')">';
+    html+='<div class="cat-icon">📺</div><div class="cat-name">'+esc(c.category_name)+'</div><div class="cat-arrow">←</div></div>';
+  }
+  html+='</div>';
+  setContent(html);
+}
+
+function loadSeries(catId, catName){
+  setContent('<div class="loading"><div class="spinner"></div><p>جارٍ التحميل...</p></div>');
+  fetchJSON(apiUrl('get_series','category_id='+catId), function(err, data){
+    if(err){ setContent('<div class="empty"><div class="empty-icon">❌</div><p>'+err+'</p></div>'); return; }
+    S.channels = data || [];
+    S.filtered = S.channels;
+    S.view='channels';
+    var html='<div class="back-btn" onclick="backToCats()">← رجوع | '+esc(catName)+'</div><div class="ch-list">';
+    for(var i=0;i<data.length;i++){
+      var c=data[i];
+      html+='<div class="ch-item" onclick="loadSeriesEps(\''+escAttr(c.series_id)+'\',\''+escAttr(c.name)+'\')">';
+      if(c.cover){
+        html+='<img class="ch-logo" src="'+escAttr(c.cover)+'" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'" loading="lazy">';
+        html+='<div class="ch-logo-placeholder" style="display:none">📺</div>';
+      } else { html+='<div class="ch-logo-placeholder">📺</div>'; }
+      html+='<div class="ch-info"><div class="ch-name">'+esc(c.name)+'</div>';
+      if(c.rating) html+='<div class="ch-group">⭐ '+esc(c.rating)+'</div>';
+      html+='</div></div>';
+    }
+    html+='</div>';
+    setContent(html);
+  });
+}
+
+function loadSeriesEps(seriesId, seriesName){
+  setContent('<div class="loading"><div class="spinner"></div><p>جارٍ تحميل الحلقات...</p></div>');
+  fetchJSON(apiUrl('get_series_info','series_id='+seriesId), function(err, data){
+    if(err){ setContent('<div class="empty"><div class="empty-icon">❌</div><p>'+err+'</p></div>'); return; }
+    var html='<div class="back-btn" onclick="backToCats()">← رجوع | '+esc(seriesName)+'</div><div class="ch-list">';
+    var eps = data.episodes || {};
+    var seasons = Object.keys(eps);
+    for(var s=0;s<seasons.length;s++){
+      var seasonEps = eps[seasons[s]];
+      html+='<div style="padding:8px 16px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)">الموسم '+seasons[s]+'</div>';
+      for(var e=0;e<seasonEps.length;e++){
+        var ep=seasonEps[e];
+        var ext=ep.container_extension||'mkv';
+        var streamUrl=S.host+'/series/'+S.user+'/'+S.pass+'/'+ep.id+'.'+ext;
+        html+='<div class="ch-item" onclick="playStream(\''+escAttr(streamUrl)+'\',\''+escAttr(seriesName+' - ح'+ep.episode_num)+'\')">';
+        html+='<div class="ch-logo-placeholder">▶️</div>';
+        html+='<div class="ch-info"><div class="ch-name">الحلقة '+esc(ep.episode_num)+(ep.title?' - '+esc(ep.title):'')+'</div></div></div>';
+      }
+    }
+    html+='</div>';
+    setContent(html);
+  });
+}
+
+// ===== TABS =====
+function switchTab(tab, el){
+  S.currentTab=tab;
+  document.querySelectorAll('.tab').forEach(function(t){t.className='tab';});
+  el.className='tab active';
+  document.getElementById('searchInput').value='';
+  if(tab==='live') loadLiveCategories();
+  else if(tab==='vod') loadVodCategories();
+  else loadSeriesCategories();
+}
+
+// ===== SEARCH =====
+function onSearch(q){
+  if(S.view!=='channels') return;
+  q=q.toLowerCase().trim();
+  if(!q){ S.filtered=S.channels; }
+  else { S.filtered=S.channels.filter(function(c){return (c.name||'').toLowerCase().indexOf(q)>=0;}); }
+  if(S.currentTab==='live') renderChannels(S.filtered, S.currentCat?S.currentCat.name:'');
+  else if(S.currentTab==='vod') renderVodList(S.filtered, '');
+}
+
+// ===== PLAYER =====
+var currentStreamUrl = null;
+
+function playStream(url, name){
+  currentStreamUrl = url;
+  S.currentName = name;
+  document.getElementById('playerChName').textContent = name;
+  document.getElementById('playerScreen').className='visible';
+  document.getElementById('playerErr').className='player-err';
+  document.getElementById('playerStatus').textContent='جارٍ التحميل...';
+  var v = document.getElementById('videoEl');
+  v.src = url;
+  v.load();
+  v.play();
+  v.onerror = function(){
+    document.getElementById('playerErrMsg').textContent='القناة غير متاحة أو التنسيق غير مدعوم. جرب قناة أخرى.';
+    document.getElementById('playerErr').className='player-err show';
+  };
+  v.oncanplay = function(){ document.getElementById('playerStatus').textContent=''; };
+  v.onwaiting = function(){ document.getElementById('playerStatus').textContent='جارٍ التحميل...'; };
+  v.onplaying = function(){ document.getElementById('playerStatus').textContent=''; };
+}
+
+function retryPlay(){
+  if(currentStreamUrl) playStream(currentStreamUrl, S.currentName||'');
+}
+
+function closePlayer(){
+  var v=document.getElementById('videoEl');
+  v.pause(); v.src='';
+  document.getElementById('playerScreen').className='';
+}
+
+// ===== HELPERS =====
+function setContent(html){ document.getElementById('mainContent').innerHTML=html; }
+
+function esc(s){
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function escAttr(s){
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
